@@ -135,22 +135,92 @@ class DarkToDoApp:
         ).pack(side="left", padx=10)
     
     def create_new_list(self):
-        """Create a new list with dialog"""
-        dialog = ctk.CTkInputDialog(
-            text="Enter new list name:", 
-            title="New List",
-            fg_color=self.colors["card_bg"],
-            text_color=self.colors["fg"]
-        )
-        list_name = dialog.get_input()
+        """Create a new list with custom dialog"""
+        # Create dialog window
+        dialog = ctk.CTkToplevel(self.root)
+        dialog.title("New List")
+        dialog.geometry("400x200")
+        dialog.transient(self.root)  # Set as transient to main window
+        dialog.grab_set()  # Make modal
+        dialog.focus_set()
         
-        if list_name:
-            if list_name not in self.lists:
-                self.lists[list_name] = []
-                self.save_data()
-                self.create_main_screen()
-            else:
-                messagebox.showerror("Error", "List name already exists!")
+        # Center the dialog
+        main_x = self.root.winfo_x()
+        main_y = self.root.winfo_y()
+        main_width = self.root.winfo_width()
+        main_height = self.root.winfo_height()
+        
+        dialog_x = main_x + (main_width // 2) - 200
+        dialog_y = main_y + (main_height // 2) - 100
+        dialog.geometry(f"+{dialog_x}+{dialog_y}")
+        
+        # Set colors
+        dialog.configure(fg_color=self.colors["card_bg"])
+        
+        # Content frame
+        content = ctk.CTkFrame(dialog, fg_color=self.colors["card_bg"])
+        content.pack(padx=20, pady=20, fill="both", expand=True)
+        
+        # Label
+        ctk.CTkLabel(
+            content,
+            text="Enter new list name:",
+            text_color=self.colors["fg"]
+        ).pack(pady=10)
+        
+        # Entry field
+        entry = ctk.CTkEntry(
+            content,
+            width=300,
+            fg_color=self.colors["entry_bg"],
+            text_color=self.colors["fg"],
+            border_color=self.colors["accent"]
+        )
+        entry.pack(pady=10)
+        entry.focus_set()
+        
+        # Button frame
+        btn_frame = ctk.CTkFrame(content, fg_color=self.colors["card_bg"])
+        btn_frame.pack(pady=10)
+        
+        # Result variable
+        result = [None]
+        
+        def create_list():
+            """Handle list creation"""
+            list_name = entry.get().strip()
+            if list_name:
+                if list_name in self.lists:
+                    messagebox.showerror("Error", "List name already exists!")
+                else:
+                    result[0] = list_name
+                    dialog.destroy()
+        
+        # Buttons
+        ctk.CTkButton(
+            btn_frame,
+            text="Create",
+            command=create_list,
+            fg_color=self.colors["accent"],
+            hover_color="#1a6fc9"
+        ).pack(side="left", padx=10)
+        
+        ctk.CTkButton(
+            btn_frame,
+            text="Cancel",
+            command=dialog.destroy,
+            fg_color=self.colors["danger"],
+            hover_color="#cc3d3d"
+        ).pack(side="left", padx=10)
+        
+        # Wait for dialog to close
+        self.root.wait_window(dialog)
+        
+        # Process result
+        if result[0]:
+            self.lists[result[0]] = []
+            self.save_data()
+            self.create_main_screen()
     
     def delete_list(self, list_name):
         """Delete an existing list"""
